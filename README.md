@@ -1,4 +1,7 @@
-# PyTorchImageClassifier
+- [Developing an AI Application](#developing-an-ai-application)
+- [Project Overview](#project-overview)
+- [Project Structure](#project-structure)
+- [Goal](#goal)
 
 ## Developing an AI Application
 
