@@ -24,12 +24,12 @@ from tqdm import tqdm
 
 # Command line arguments
 parser = argparse.ArgumentParser()
-parser.add_argument('--data_directory', type=str, help='This directory three folder for training data, testing data, and validation data')
 parser.add_argument('--arch', type=str, help='Model\'s Architecture')
-parser.add_argument('--learning_rate', type=float, help='Learning Rate')
-parser.add_argument('--epochs', type=int, help = 'Number of epochs')
-parser.add_argument('--gpu', action='store_true', help='Use GPU if available')
 parser.add_argument('--checkpoint_path', type=str, help = 'Save trained model to this checkpoint file')
+parser.add_argument('--epochs', type=int, help = 'Number of epochs')
+parser.add_argument('--data_directory', type=str, help='This directory three folder for training data, testing data, and validation data')
+parser.add_argument('--gpu', action='store_true', help='Use GPU if available')
+parser.add_argument('--learning_rate', type=float, help='Learning Rate')
 
 args, a = parser.parse_known_args()
 print(args, a)
