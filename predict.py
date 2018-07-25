@@ -3,6 +3,7 @@ import argparse
 import torch
 from torchvision import transforms, models
 import numpy as np
+from train import load_model
 from PIL import Image
 
 
@@ -10,22 +11,33 @@ from PIL import Image
 parser = argparse.ArgumentParser()
 parser.add_argument('--checkpoint_path', type=str, help='Name of checkpoint file to use for predicting')
 parser.add_argument('--gpu', action='store_true', help='Use GPU if available')
-parser.add_argument('--image_path', type=str, help='Path of image file which will be used for prediction')
-parser.add_argument('--category_names', type=str, help='JSON file containing mapping of number to labels')
+parser.add_argument('--image_path', type=str, help='Path for image file which will be used for prediction')
+parser.add_argument('--label_file', type=str, help='JSON file containing mapping of number to labels')
 parser.add_argument('--top_k', type=int, help='Return top k predictions')
 
 args = parser.parse_args()
+# Assume that we are on a CUDA machine, then this should printa CUDA device:
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+print(device)
+
 # load the checkpoint
-def load_checkpoint(filepath):
-    ckp = torch.load(filepath)
-    model = models.vgg16(pretrained=True)
-    
+def load_checkpoint(checkpoint_path):
+    ckp = torch.load(checkpoint_path)
+#     model = models.vgg16(pretrained=True)
+    if ckp['arch'] == "vgg16":
+        model = models.vgg16(pretrained=True)
+    elif ckp['arch'] == "vgg19":
+        model = models.vgg16(pretrained=True)
+    else:
+        print("Unknown architecture")
+
     for param in model.parameters():
         param.requires_grad = False
         
     model.classifier = ckp["classifier"]
-    model.load_state_dict(ckp["state_dict"])
+    model.load_state_dict = (ckp["state_dict"])
     model.class_to_idx = ckp['class_to_idx']
+#     model.to(device)
     model.cuda()
     return model
 
@@ -39,14 +51,13 @@ def predict(image_path, top_k=5):
         gpu = args.gpu
     if args.image_path:
         image_path = args.image_path
-    if args.category_names:
-        category_names = args.category_names
+    if args.label_file:
+        label_file = args.label_file
     if args.top_k:
         top_k = args.top_k
     
     # load the checkpoint
     model = load_checkpoint(checkpoint_path)
-
     # use GPU if available
 
     if gpu & torch.cuda.is_available():
@@ -71,7 +82,7 @@ def predict(image_path, top_k=5):
     top_labs = top_labs.detach().cpu().numpy().tolist()[0]
 
     # label mapping from file
-    with open(args.category_names, 'r') as f:
+    with open(args.label_file, 'r') as f:
         cat_to_name = json.load(f)
     # Convert indices to classes
     idx_to_class = {val: key for key, val in model.class_to_idx.items()}
