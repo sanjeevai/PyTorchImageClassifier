@@ -3,7 +3,6 @@ import argparse
 import torch
 from torchvision import transforms, models
 import numpy as np
-from train import load_model
 from PIL import Image
 
 
@@ -47,11 +46,6 @@ def predict(image_path, top_k=5):
     
     # load the checkpoint
     model = load_checkpoint(checkpoint_path)
-    # checkpoint_dict = torch.load(checkpoint_path)
-    # arch = checkpoint_dict['arch']
-    # num_labels = len(checkpoint_dict['class_to_idx'])
-
-    # model = load_model(arch=arch, num_labels=num_labels)
 
     # use GPU if available
 

@@ -31,17 +31,19 @@ parser.add_argument('--data_directory', type=str, help='This directory three fol
 parser.add_argument('--gpu', action='store_true', help='Use GPU if available')
 parser.add_argument('--learning_rate', type=float, help='Learning Rate')
 
-args, a = parser.parse_known_args()
-print(args, a)
+args = parser.parse_args()
 
-# device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-# Assume that we are on a CUDA machine, then this should print a CUDA device:
-
-# print(device)
+print(args)
 
 # this method loads the model
+
 def load_model(arch="vgg16", num_labels=102):
+    """
+    Args:
+    1. arch: It is the architecture which I used for training. Here, it is vgg16
+    2. num_label: Number of class labels. Hers there are 102 classes
+    """
+    
     # load pre-trained model
     if arch == "vgg16":
         model = models.vgg16(pretrained=True)
@@ -60,24 +62,33 @@ def load_model(arch="vgg16", num_labels=102):
     model.classifier = classifier
     
     return model
+
 # this method trains the model
 def train_model(arch='vgg16', epochs = 2, learning_rate = 0.0001, gpu=False, checkpoint_path=''):
+    """
+    Args:
+    1. arch: Architecture of model
+    2. epochs: Number of epoch to train for
+    3. learning_rate: Learning rate of model. Default set to 0.0001 for better results
+    4. gpu: Whether to use GPU or not
+    5. checkpoint: Save model checkpoint to this file path
+    """
     # use command line arguments
-    if args.arch:
+    if args.arch: # architecture
         arch = args.arch
-    if args.epochs:
+    if args.epochs: # epochs
         epochs = args.epochs
-    if args.learning_rate:
+    if args.learning_rate: #learning rate
         learning_rate = args.learning_rate
-    if args.gpu:
+    if args.gpu: #use GPU
         gpu = args.gpu
-    if args.checkpoint_path:
+    if args.checkpoint_path: # checkpoint path
         checkpoint_path = args.checkpoint_path
     
-    print('Network architecture:', "vgg16")
+    print('Pre-trained model architecture:', "vgg16")
     print('Number of epochs:', epochs)
     print('Learning rate:', learning_rate)
-    num_labels = len(train_set.classes)
+    # num_labels = len(train_set.classes)
     model = load_model(arch=arch)
 
     if gpu and torch.cuda.is_available():
@@ -88,9 +99,11 @@ def train_model(arch='vgg16', epochs = 2, learning_rate = 0.0001, gpu=False, che
         print('Training on CPU')
         device = torch.device("cpu")
 
+    # define metrics and optimizer
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.classifier.parameters(), lr = learning_rate)
     st = time.time()
+    # train
     for epoch in range(epochs):  # loop over the dataset multiple times
         print("epoch no. {}".format(epoch + 1))
         running_loss = 0.0
@@ -112,16 +125,17 @@ def train_model(arch='vgg16', epochs = 2, learning_rate = 0.0001, gpu=False, che
             optimizer.step()
             # print statistics
             running_loss += loss.item()
+            print(running_loss)
             # print("running loss is: {}".format(running_loss))
-            if i % 200 == 199:    # print every 200 mini-batches
-                print('[%d, %5d] loss: %.3f' %
-                    (epoch + 1, i + 1, running_loss / 2000))
-                running_loss = 0.0
+            # if i % 200 == 199:    # print every 200 mini-batches
+            #     print('[%d, %5d] loss: %.3f' %
+            #         (epoch + 1, i + 1, running_loss / 2000))
+            #     running_loss = 0.0
 
     print('Finished Training in {} seconds'.format(round(time.time() - st, 0)))
     
     model.class_to_idx = train_set.class_to_idx
-    
+    # save model to checkpoint file
     if checkpoint_path:
         print("Saving checkpoint here: {}".format(checkpoint_path))
         checkpoint_dict = {'arch':'vgg16',
@@ -131,6 +145,7 @@ def train_model(arch='vgg16', epochs = 2, learning_rate = 0.0001, gpu=False, che
         }
         
         torch.save(checkpoint_dict, checkpoint_path)
+
 if args.data_directory:
     # Define transforms for the training, validation, and testing data
     train_transforms = transforms.Compose([transforms.RandomRotation(30),
@@ -158,7 +173,5 @@ if args.data_directory:
     valid_loader = data.DataLoader(valid_set, batch_size = 4, shuffle=True)
     dataloaders = [train_loader, test_loader, valid_loader]
 
-    # load_model()
-    # print(data_transforms)
-    # print(image_datasets)
+
     train_model()
