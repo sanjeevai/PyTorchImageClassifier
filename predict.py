@@ -11,8 +11,8 @@ from PIL import Image
 parser = argparse.ArgumentParser()
 parser.add_argument('--checkpoint_path', type=str, help='Name of checkpoint file to use for predicting')
 parser.add_argument('--gpu', action='store_true', help='Use GPU if available')
-parser.add_argument('--image_path', type=str, help='Path for image file which will be used for prediction')
-parser.add_argument('--label_file', type=str, help='JSON file containing mapping of number to labels')
+parser.add_argument('--image_path', type=str, help='Path of image file which will be used for prediction')
+parser.add_argument('--category_names', type=str, help='JSON file containing mapping of number to labels')
 parser.add_argument('--top_k', type=int, help='Return top k predictions')
 
 args = parser.parse_args()
@@ -40,8 +40,8 @@ def predict(image_path, top_k=5):
         gpu = args.gpu
     if args.image_path:
         image_path = args.image_path
-    if args.label_file:
-        label_file = args.label_file
+    if args.category_names:
+        category_names = args.category_names
     if args.top_k:
         top_k = args.top_k
     
@@ -77,7 +77,7 @@ def predict(image_path, top_k=5):
     top_labs = top_labs.detach().cpu().numpy().tolist()[0]
 
     # label mapping from file
-    with open(args.label_file, 'r') as f:
+    with open(args.category_names, 'r') as f:
         cat_to_name = json.load(f)
     # Convert indices to classes
     idx_to_class = {val: key for key, val in model.class_to_idx.items()}
