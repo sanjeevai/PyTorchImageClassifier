@@ -9,3 +9,6 @@
 # exports of README
 README.html
 README.pdf
+
+# vscode settings
+.vscode/*
