@@ -29,24 +29,35 @@
 
 ## Part 1: Developing an AI Application
 
-Going forward, AI algorithms will be incorporated into more and more everyday applications. For example, you might want to include an image classifier in a smart phone app. To do this, you'd use a **deep learning** model trained on hundreds of thousands of images as **part** of the overall application architecture. A large part of software development in the future will be using these types of models as common parts of applications.
+Going forward, AI algorithms will be incorporated into more and more everyday applications. For example, we might want to include an image classifier in a smart phone app. To do this, we'd use a **deep learning** model trained on hundreds of thousands of images as part of the overall application architecture. A large part of software development in the future will be using these types of models as common parts of applications.
 
-In this project, I'll train an image classifier to recognize different species of flowers. We can imagine using something like this in a phone app that tells us the name of the flower our camera is looking at. I'll train this classifier in a Jupyter Notebook, then export it for use in my application. I'll be using [this dataset](http://www.robots.ox.ac.uk/~vgg/data/flowers/102/index.html) of 102 flower categories, you can see a few examples below.
+In this project, we'll train an image classifier to recognize different species
+of flowers. We can imagine using something like this in a phone app that tells
+us the name of the flower our camera is looking at. I'll train this classifier
+in a Jupyter Notebook, then export it for use in my application. I'll be using
+[this dataset](http://www.robots.ox.ac.uk/~vgg/data/flowers/102/index.html) of
+102 flower categories, you can see a few examples below.
 
 <img src='assets/Flowers.png' width=500px>
 
-The project is broken down into multiple steps:
+In this first part of the project, we'll work through a Jupyter notebook to
+implement an image classifier with PyTorch.
+
+If you want to try this project on your own (from scratch) then you can find the
+files [on GitHub here](https://github.com/udacity/aipnd-project).
+
+This first part is broken down into multiple steps:
 
 - **Load** and **preprocess** the image dataset
 - **Train** the image classifier on our dataset
 - Use the trained classifier to **predict** image content
 
-When I've completed this project, I'll have an application that can be trained
-on any set of labeled images. Here my network will be learning about flowers and
+When we've completed this project, we'll have an application that can be trained
+on any set of labeled images. Here the network will be learning about flowers and
 end up as a **command line application**. But, what you do with your new skills
 depends on your imagination and effort in building a data set. For example,
 imagine an app where you take a picture of a car, it tells you what the make and
-model is, then looks up information about it. Go build your own data set and
+model is, then looks up information about it. Go try building your own data set and
 make something new.
 
 <a id="load_data"></a>
@@ -163,6 +174,8 @@ If I want to load
 the model and keep training, I'll need to save the number of epochs as well as
 the optimizer state, `optimizer.state_dict`. I'll definitely use this trained
 model in Part 2, so it is best to save now.
+
+<a id="attr"></a>
 
 ```python
 # save the checkpoint
@@ -320,7 +333,7 @@ def process_image(image_path):
     mean = np.array([0.485, 0.456, 0.406])
     std = np.array([0.229, 0.224, 0.225])
 
-    # normalise the color channels
+    # normalise the color channels in transformed image
     np_ = (np.transpose(np_, (1, 2, 0)) - mean)/std
     np_ = np.transpose(np_, (2, 0, 1))
 
@@ -331,35 +344,103 @@ To check my work, the function below converts a PyTorch tensor and displays it i
 
 ```python
 def imshow(image, ax=None, title=None):
+
     if ax is None:
         fig, ax = plt.subplots()
-    
+
     # PyTorch tensors assume the color channel is the first dimension
     # but matplotlib assumes is the third dimension
-    image = image.transpose((1, 2, 0))
-    
+    image = image.transpose((1, 2, 0)) # 2 and 0 are swapped
+
     # Undo preprocessing
     mean = np.array([0.485, 0.456, 0.406])
     std = np.array([0.229, 0.224, 0.225])
     image = std * image + mean
-    
+
     # Image needs to be clipped between 0 and 1 or it looks like noise when displayed
     image = np.clip(image, 0, 1)
-    
+
     ax.imshow(image)
-    
+
     return ax
 ```
+
+```python
+>>>imshow(process_image("flowers/test/1/image_06743.jpg"));
+```
+<img src="./assets/imshow_example.png" alt="imshow_example" width="30%">
 
 <a id = "class_pred"></a>
 
 #### Class Prediction
 
+Once we can get images in the correct format, it's time to write a function for
+making predictions with our model. A common practice is to predict the top 5 or
+so (usually called top-K) most probable classes. I'll calculate the class
+probabilities then find the K largest values.
+
+To get the top K largest values in a tensor I'll use `x.topk(k)`. This method
+returns both the highest k probabilities and the indices of those probabilities
+corresponding to the classes. I'll convert from these indices to the actual
+class labels using `class_to_idx` which we added to the model as an
+attribute([see here](#attr)).
+We'll then invert the dictionary to get a mapping from index to class as well.
+
+Again, this method will take a path to an image and a model checkpoint, then
+return the probabilities and classes. Here is how the function will output results.
+
+```python
+>>> probs, classes = predict(image_path, model)
+>>> print(probs)
+[ 0.01558163  0.01541934  0.01452626  0.01443549  0.01407339]
+>>> print(classes)
+['70', '3', '45', '62', '55']
+```
+
+Now, let's see the action on a test image.
+
+```python
+>>> predict("flowers/test/1/image_06743.jpg", model = model, top_num=5)
+([0.9902989864349365,
+  0.002102087251842022,
+  0.0020295947324484587,
+  0.001994472462683916,
+  0.0013319903519004583],
+ ['1', '76', '51', '83', '86'],
+ ['pink primrose', 'morning glory', 'petunia', 'hibiscus', 'tree mallow'])
+```
+
 <a id = "sanity_ck"></a>
 
 #### Sanity Checking
 
+Now that we are able to make predictions, let's visualise the results to
+confirm. Even if the testing accuracy is high, it's always good to check that
+there aren't obvious bugs. We'll use `matplotlib` to plot the probabilities for
+the top 5 classes as a bar graph, along with the input image. It looks
+like this:
+
+<img src="./assets/plot_solution_example.png" width="50%">
+
 ## Part 2: Command Line App
+
+Now that I've built and trained a deep neural network on the flower data set,
+it's time to convert it into an application that others can use. This
+application will be a pair of Python scripts that run from the command line. For
+testing, I'll use the checkpoint I saved in the first part.
+
+<a id="specs"></a>
+
+### Specifications
+
+For the command line application part we have two files, `train.py` and
+`predict.py`. The first file, `train.py`, will train a new network on a dataset
+and save the model as a checkpoint. The second file, `predict.py`, uses a
+trained network to predict the class for an input image. 
+
+- `train.py`
+
+- `test.py`
 
 <a id="files"></a>
 
