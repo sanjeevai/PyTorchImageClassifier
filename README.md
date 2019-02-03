@@ -20,7 +20,6 @@
 - [Part 2: Command Line App](#p2)
   - [Specifications](#specs)
 - [Files](#files)
-- [Running](#run)
 - [Software and Libraries](#sw_lib)
 
 ***
@@ -72,14 +71,14 @@ too.
 
 The dataset is split into three parts: **training, validation** and **testing.**
 
-For the training, I'll apply transformations such as random scaling, cropping
-and flipping. This will help the network generalise leading to a better
-performance. I'll also make sure the input data is resized to **224x224** as
+For the training, we'll apply transformations such as **random scaling, cropping**
+and **flipping.** This will help the network generalise leading to a better
+**performance.** we'll also make sure the input data is resized to **224x224** as
 required by the **pre-trained** networks.
 
 The validation and testing sets are used to measure the model's performance on
-data it hasn't seen yet. For this, I won't be applying scaling or rotation
-transformations, but will resize then crop the images to the appropriate size.
+data it hasn't seen yet. For this, we won't be applying scaling or rotation
+transformations, but will **resize then crop** the images to the appropriate size.
 
 <a id="label_map"></a>
 
@@ -88,15 +87,14 @@ transformations, but will resize then crop the images to the appropriate size.
 I'll also load in a mapping from **category label** to **category name.** You
 can find this in the file `cat_to_name.json`. It's a JSON object which you can
 read in with the `json` [module](https://docs.python.org/2/library/json.html).
-This will give you a dictionary mapping the integer encoded categories to the
+This will give a dictionary mapping the integer encoded categories to the
 actual names of the flowers.
 
 <a id="build_train"></a>
 
 ### Building and Training the Classifier
 
-Now that the data is ready, now I'll build and train the classifier. As usual, I
-will use `vgg16` from `torchvision.models` to get the image features. Then I'll
+Now that the data is ready, we'll build and train the classifier. We will use `vgg16` from `torchvision.models` to get the image features. Then we'll
 build and train a new feed-forward classifier using those features.
 
 #### Step 1. Load a pre-trained network
@@ -104,6 +102,7 @@ build and train a new feed-forward classifier using those features.
 Build and train a pre-trained network:
 
 ```python
+from torchvision import models
 model = models.vgg16(pretrained = True)
 ```
 
@@ -120,7 +119,7 @@ from torch import nn
 classifier = nn.Sequential(OrderedDict([
     ('fc1', nn.Linear(25088, 4096)),
     ('relu1', nn.ReLU()),
-    ('fc6', nn.Linear(4096, 102)),
+    ('fc2', nn.Linear(4096, 102)),
     ('output', nn.LogSoftmax(dim=1))
 ]))
 
@@ -129,7 +128,7 @@ model.classifier = classifier
 model.to(device)
 ```
 
-The last part will load the model on GPU if you have set it as default in the
+The last part will load the model on **GPU** if you have set it as default in the
 starting of the notebook.
 
 #### Step 3. Train the classifier layers using backpropagation using the pre-trained network to get the features
@@ -158,24 +157,23 @@ for the model's performance on completely new images. Running  the test images
 through the network and measuring the accuracy provided an **accuracy of 86%**.
 
 <a id="save_ckp"></a>
+<a id="attr"></a>
 
 ### Save the Checkpoint
 
-Now that the network is trained, I'll save the model so that I can load it later
-for making predictions. I also want to save other things such as the mapping of
-**classes** to **indices** which I can get from one of the image datasets:
-`image_datasets['train'].class_to_idx`. I will attach this to the model as an
+Now that the network is trained, we'll save the model so that we can load it later
+for making predictions. We also want to save other things such as the mapping of
+**classes** to **indices** which we can get from one of the image datasets:
+`image_datasets['train'].class_to_idx`. We will attach this to the model as an
 attribute which will make inference easier later on.
 
-I'll want to completely rebuild the model later so I can use it for inference,
-so I will include any information I need in the checkpoint.
+We'll completely rebuild the model later so we can use it for inference,
+so we will include any information we need in the checkpoint.
 
-If I want to load
-the model and keep training, I'll need to save the number of epochs as well as
-the optimizer state, `optimizer.state_dict`. I'll definitely use this trained
+If we want to load
+the model and keep training, we'll need to save the number of epochs as well as
+the optimizer state, `optimizer.state_dict`. We'll definitely use this trained
 model in Part 2, so it is best to save now.
-
-<a id="attr"></a>
 
 ```python
 # save the checkpoint
@@ -200,7 +198,7 @@ I built a function to load the checkpoint so that whenever I start a new
 session, I won't need to retrain the network.
 
 ```python
-# write a function that loads a checkpoint and rebuilds the model
+# function that loads a checkpoint and rebuilds the model
 import torch
 from torchvision import models
 def load_checkpoint(filepath):
@@ -269,9 +267,9 @@ VGG(
 
 ### Inference for Classification
 
-Now I'll write a function to use a trained network for inference. That is, I'll
-pass an image into the network and predict the class of the flower in the image.
-I need to write a function called predict that takes an **image** and a **model,** then returns
+Now we'll write a function to use a trained network for inference. That is, we'll
+pass an image to the network and predict the class of the flower in the image.
+We'll write a function called predict that takes an **image** and a **model,** then returns
 the **top K**  most likely classes along with the **probabilities.** It should look
 like
 
@@ -283,8 +281,8 @@ like
 ['70', '3', '45', '62', '55']
 ```
 
-First I'll need to handle processing the input image such that it can be used in
-my network.
+First we'll need to handle processing the input image such that it can be used in
+our network.
 
 <a id = "infer"></a>
 
@@ -293,16 +291,20 @@ my network.
 
 #### Image Preprocessing
 
-I'll need to use PIL to load the image ([documentation](https://pillow.readthedocs.io/en/latest/reference/Image.html)). It's best to write a function that preprocesses the image so it can be used as input for the model. This function should process the images in the same manner used for training.
+We'll use **PIL** to load the image
+([documentation](https://pillow.readthedocs.io/en/latest/reference/Image.html)).
+It is best to write a function that preprocesses the image so it can be used as
+input for the model. This function should process the images in the same manner
+used for training.
 
-First, resize the images where the shortest side is 256 pixels, keeping the aspect ratio. This can be done with the [`thumbnail`](https://pillow.readthedocs.io/en/3.1.x/reference/Image.html#PIL.Image.Image.thumbnail) or [`resize`](https://pillow.readthedocs.io/en/3.1.x/reference/Image.html#PIL.Image.Image.thumbnail) methods. Then I'll crop out the center 224x224 portion of the image.
+First, resize the images where the shortest side is 256 pixels, keeping the aspect ratio. This can be done with the [`thumbnail`](https://pillow.readthedocs.io/en/3.1.x/reference/Image.html#PIL.Image.Image.thumbnail) or [`resize`](https://pillow.readthedocs.io/en/3.1.x/reference/Image.html#PIL.Image.Image.thumbnail) methods. Then crop out the center 224x224 portion of the image.
 
-Color channels of images are typically encoded as integers 0-255, but the model expected floats 0-1. I'll convert the values.
+Color channels of images are typically encoded as integers 0-255, but the model expected floats 0-1. We'll convert these values.
 
-As before, the network expects the images to be normalized in a specific way. For the means, it's `[0.485, 0.456, 0.406]` and for the standard deviations `[0.229, 0.224, 0.225]`. I'll subtract the means from each color channel, then divide by the standard deviation.
+As before, the network expects the images to be **normalized** in a specific way. For the means, it's `[0.485, 0.456, 0.406]` and for the standard deviations `[0.229, 0.224, 0.225]`. We'll subtract the means from each color channel, then divide by the standard deviation.
 
 And finally, PyTorch expects the color channel to be the first dimension but
-it's the third dimension in the PIL image and Numpy array. I'll reorder
+it's the third dimension in the PIL image and Numpy array. We'll reorder
 dimensions using `ndarray.transpose`. The color channel needs to be first and
 retain the order of the other two dimensions.
 
@@ -340,7 +342,7 @@ def process_image(image_path):
     return np_
 ```
 
-To check my work, the function below converts a PyTorch tensor and displays it in the notebook. If `process_image` function works, running the output through this function should return the original image (except for the cropped out portions).
+To check our work, the function below converts a PyTorch tensor and displays it in the notebook. If `process_image` function works, running the output through this function should return the original image (except for the cropped out portions).
 
 ```python
 def imshow(image, ax=None, title=None):
@@ -366,7 +368,7 @@ def imshow(image, ax=None, title=None):
 ```
 
 ```python
->>>imshow(process_image("flowers/test/1/image_06743.jpg"));
+>>>imshow(process_image("flowers/test/1/image_06743.jpg"))
 ```
 <img src="./assets/imshow_example.png" alt="imshow_example" width="30%">
 
@@ -374,14 +376,14 @@ def imshow(image, ax=None, title=None):
 
 #### Class Prediction
 
-Once we can get images in the correct format, it's time to write a function for
+Once we get images in the correct format, it's time to write a function for
 making predictions with our model. A common practice is to predict the top 5 or
-so (usually called top-K) most probable classes. I'll calculate the class
+so (usually called top-K) most probable classes. We'll calculate the class
 probabilities then find the K largest values.
 
-To get the top K largest values in a tensor I'll use `x.topk(k)`. This method
+To get the top K largest values in a tensor we'll use `x.topk(k)`. This method
 returns both the highest k probabilities and the indices of those probabilities
-corresponding to the classes. I'll convert from these indices to the actual
+corresponding to the classes. We'll convert from these indices to the actual
 class labels using `class_to_idx` which we added to the model as an
 attribute([see here](#attr)).
 We'll then invert the dictionary to get a mapping from index to class as well.
@@ -397,7 +399,9 @@ return the probabilities and classes. Here is how the function will output resul
 ['70', '3', '45', '62', '55']
 ```
 
-Now, let's see the action on a test image.
+Now, let's see the action on this test image.
+
+<img src="./flowers/test/1/image_06743.jpg" alt="test_example" width="50%">
 
 ```python
 >>> predict("flowers/test/1/image_06743.jpg", model = model, top_num=5)
@@ -422,6 +426,8 @@ like this:
 
 <img src="./assets/plot_solution_example.png" width="50%">
 
+<a id="p2"></a>
+
 ## Part 2: Command Line App
 
 Now that I've built and trained a deep neural network on the flower data set,
@@ -438,9 +444,42 @@ For the command line application part we have two files, `train.py` and
 and save the model as a checkpoint. The second file, `predict.py`, uses a
 trained network to predict the class for an input image. 
 
-- `train.py`
+- `train.py`: Train a new network on a data set with `train.py`
+  - Basic usage: `python train.py data_directory`
+  - Prints out training loss, validation loss, and validation accuracy as the
+  network trains
+  - Options:
+    - Set directory to save checkpoints:
 
-- `test.py`
+      `python train.py data_directory --checkpoint_path vgg19.pth`  
+    - Choose architecture:
+
+      `python train.py data_directory --arch "vgg19"`
+
+    - Set hyperparameters:
+
+      `python train.py data_directory --learning_rate 0.01 --epochs 20`
+
+    - Use GPU for training:
+
+      `python train.py data_directory --gpu`
+
+- `test.py`: Predict flower name from an image with `predict.py` along with the
+  probability of that name. That is, we'll pass a single image `/path/to/image`
+  and return the flower name and the class probability
+  - Basic usage:
+
+    `python predict.py /path/to/image --checkpoint_path "vgg19.pth"`
+
+  - Options:
+    - Return top _K_ most likely classes:
+
+      `python predict.py --image_path /path/to/image --checkpoint_path "vgg19.pth
+  --label_file cat_to_name.json"`
+    - Use GPU for inference:
+
+      `python predict.py --image_path /path/to/image --checkpoint_path "vgg19.pth
+  --gpu"`
 
 <a id="files"></a>
 
@@ -448,7 +487,7 @@ trained network to predict the class for an input image.
 <pre>
 .
 ├── Image Classifier Project.ipynb---# BUILD AND TRAIN MODEL FOR PART I
-├── assets---------------------------# REFERENCE IMAGES USED IN THE NOTEBOOK
+├── assets---------------------------# REFERENCE IMAGES
 ├── cat_to_name.json-----------------# FLOWERS ID TO CLASS LABEL MAPPER
 ├── flowers--------------------------# DATA DIRECTORY
 │   ├── test-------------------------# TEST DATA
@@ -458,12 +497,8 @@ trained network to predict the class for an input image.
                                        TO PREDICT ANY LABELLED IMAGE FROM TEST
                                        DIRECTORY
 └── train.py-------------------------# RUN THIS SCRIPT (WITH EXTERNAL ARGUMENTS)
-                                       TO TRAIN THE MDOEL AND SAVE THE CHECKPOINT
+                                       TO TRAIN THE MODEL AND SAVE THE CHECKPOINT
 </pre>
-
-<a id="run"></a>
-
-## Running
 
 <a id="sw_lib"></a>
 
