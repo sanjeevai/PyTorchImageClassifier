@@ -504,4 +504,4 @@ trained network to predict the class for an input image.
 
 ## Software and Libraries
 
-This project uses Python 3.6.3 and the necessary libraries are mentioned in _requirements.txt_
+This project uses Python 3.6.3 and the necessary libraries are mentioned in [_requirements.txt_](requirements.txt).
